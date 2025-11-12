@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Nav from "./components/Nav";
 import SideBar from "./components/SideBar";
+import AllSongs from "./components/AllSongs";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <Nav />
       <main>
         <SideBar />
+        <AllSongs />
       </main>
     </div>
   );
