@@ -2,6 +2,7 @@ import Image from "next/image";
 import Nav from "./components/Nav";
 import SideBar from "./components/SideBar";
 import AllSongs from "./components/AllSongs";
+import MusicPlayer from "./components/MusicPlayer";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <Nav />
       <main>
         <SideBar />
+        <MusicPlayer />
         <AllSongs />
       </main>
     </div>
