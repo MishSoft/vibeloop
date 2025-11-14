@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import signUpUser from "@/lib/auth/signUpUser";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/SupabaseClient";
 
 export default function Page() {
   const router = useRouter();
@@ -11,6 +12,17 @@ export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        router.push("/");
+      } else {
+        setLoading(false);
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +42,8 @@ export default function Page() {
       }, 3000);
     }
   };
+
+  if (loading) return null;
   return (
     <div className="h-screen flex justify-center items-center w-full bg-hover">
       <div className="bg-background flex flex-col items-center  px-6 lg:px-12 py-6 rounded-md max-w-[400px] w-[90%]">

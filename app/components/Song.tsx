@@ -4,7 +4,13 @@ import React from "react";
 import Image from "next/image";
 import { Play } from "lucide-react";
 
-export default function Song() {
+interface SongProps {
+  title: string;
+  artist: string;
+  image: string;
+}
+
+export default function Song({ title, artist, image }: SongProps) {
   return (
     <div
       className="
@@ -14,11 +20,12 @@ export default function Song() {
     >
       {/* Cover Image */}
       <Image
-        src="/coverImage.avif"
+        src={image}
         alt="cover image"
         width={300}
         height={300}
         className="w-full h-52 object-cover"
+        loader={({ src }) => src}
       />
 
       {/* Play Button Overlay */}
@@ -35,9 +42,9 @@ export default function Song() {
       {/* Song Info */}
       <div className="p-2">
         <p className="text-primary-text font-semibold text-sm truncate">
-          Rain on Marble Streets
+          {title}
         </p>
-        <p className="text-secondary-text text-xs truncate">By the Lanterns</p>
+        <p className="text-secondary-text text-xs truncate">{artist}</p>
       </div>
     </div>
   );

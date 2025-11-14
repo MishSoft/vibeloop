@@ -10,6 +10,7 @@ import { LoaderCircle } from "lucide-react";
 export default function SideBar() {
   const [isOpen, setIsOpen] = useState(false);
   const { loading, session } = useUserSession();
+  const user_id = session?.user.id;
 
   const handleSideBar = () => setIsOpen(!isOpen);
   if (loading)
@@ -70,10 +71,7 @@ export default function SideBar() {
 
             {/* Library Items */}
             <div className="flex flex-col gap-2 px-4 pb-6">
-              <Item />
-              <Item />
-              <Item />
-              <Item />
+              <Item userId={user_id} />
             </div>
           </aside>
 

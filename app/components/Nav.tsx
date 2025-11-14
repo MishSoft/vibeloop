@@ -4,9 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { HouseHeart, Search, Menu } from "lucide-react";
 import useUserSession from "@/custom-hooks/useUserSession";
+import { useRouter } from "next/navigation";
+import LogoutUser from "@/lib/auth/logoutUser";
 
 export default function Nav() {
+  const router = useRouter();
   const { session, loading } = useUserSession();
+
+  const handleLogOut = async () => {
+    const result = await LogoutUser();
+
+    if (!result?.error) {
+      router.push("/");
+    }
+  };
+
   return (
     <nav
       className="fixed top-0 left-0 w-full h-16 
@@ -84,6 +96,7 @@ export default function Nav() {
           <>
             {session ? (
               <button
+                onClick={handleLogOut}
                 className="px-4 py-2 rounded-full text-primary border border-primary 
             hover:bg-primary cursor-pointer hover:text-black transition font-semibold"
               >
