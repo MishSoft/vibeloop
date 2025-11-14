@@ -1,10 +1,51 @@
 @import "tailwindcss";
 
 @theme {
+  /* Core colors */
   --color-black: #000000;
-  --color-primary: #1cff82;
-  --color-background: #121212;
-  --color-hover: #181818;
-  --color-primary-text: #eaeaea;
-  --color-secondary-text: #b3b3b3;
+  --color-background: #0d0d0d; /* უფრო ღრმა შავი */
+  --color-surface: #141414; /* ბარებისა და ბლოკებისთვის */
+  --color-hover: #1a1a1a;
+  --color-border: #2a2a2a;
+
+  /* Brand accent */
+  --color-primary: #1cff82; /* შენი არსებული — leave */
+  --color-primary-light: #45ffa0; /* hover/active brighter */
+  --color-primary-dark: #00d566;
+
+  /* Second Accent (Vibeloop Signature Purple) */
+  --color-accent: #9b5cff; /* ხელმისაწვდომი ფერი highlight-ებისთვის */
+  --color-accent-light: #b78cff;
+
+  /* Text colors */
+  --color-primary-text: #f5f5f5;
+  --color-secondary-text: #bbbbbb;
+  --color-tertiary-text: #6f6f6f;
+
+  /* States */
+  --color-success: #1fcf76;
+  --color-danger: #ff4d4d;
+  --color-warning: #ffc848;
+
+  /* Gradients */
+  --gradient-accent: linear-gradient(90deg, #1cff82, #9b5cff);
+}
+
+/* styles/globals.css ან tailwind.css */
+.queue-scroll::-webkit-scrollbar {
+  width: 8px; /* scroll სიგანე */
+}
+
+.queue-scroll::-webkit-scrollbar-track {
+  background: #121212; /* track background */
+}
+
+.queue-scroll::-webkit-scrollbar-thumb {
+  background-color: #1cff82; /* thumb color */
+  border-radius: 10px;
+  border: 2px solid #0d0d0d; /* padding effect */
+}
+
+.queue-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #1cff82aa; /* glow effect on hover */
 }

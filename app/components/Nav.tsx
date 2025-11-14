@@ -1,74 +1,105 @@
+"use client";
+
 import Image from "next/image";
-import React from "react";
-import { HouseHeart, Search, Menu } from "lucide-react";
 import Link from "next/link";
+import { HouseHeart, Search, Menu } from "lucide-react";
+import useUserSession from "@/custom-hooks/useUserSession";
 
 export default function Nav() {
+  const { session, loading } = useUserSession();
   return (
-    <nav className="h-15 flex justify-between md:justify-around items-center px-6 fixed top-0 left-0 w-full bg-[#0F0F0F] z-100">
-      <div className="flex gap-2 sm:gap-6 items-center">
-        <div className="text-white sm:hidden w-11 h-11 flex items-center justify-center">
-          <Menu size={20} />
-        </div>
-        <Image
-          src="/logo.png"
-          alt="logo"
-          width={500}
-          height={500}
-          className="w-9 h-9 hidden sm:block"
-        />
+    <nav
+      className="fixed top-0 left-0 w-full h-16 
+      bg-[#0D0D0D]/80 backdrop-blur-xl border-b border-border 
+      flex items-center justify-between px-5 md:px-10 z-999"
+    >
+      {/* LEFT SIDE */}
+      <div className="flex items-center gap-4 md:gap-8">
+        {/* Mobile Menu Icon */}
+        <button className="sm:hidden text-primary-text hover:text-primary transition">
+          <Menu size={22} />
+        </button>
+
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="logo"
+            width={40}
+            height={40}
+            className="w-9 h-9"
+          />
+        </Link>
+
+        {/* Home Icon */}
         <Link
-          href={"/"}
-          className="w-11 h-11 grid place-items-center text-white"
+          href="/"
+          className="hidden sm:grid place-items-center w-10 h-10 
+            text-primary-text hover:text-primary transition"
         >
           <HouseHeart size={20} />
         </Link>
       </div>
 
-      {/* Mobile Logo */}
-      <div className="sm:hidden">
-        <Image
-          src="/logo.png"
-          alt="logo"
-          width={500}
-          height={500}
-          className="w-9 h-9"
-        />
-      </div>
-
-      <div className="sm:flex hidden gap-2 text-secondary-text font-semibold  pr-6">
-        <Link href={"/"} className="hover:text-primary-text">
+      {/* CENTER LINKS (Desktop) */}
+      <div className="hidden sm:flex items-center gap-6 text-secondary-text font-medium">
+        <Link href="/" className="hover:text-primary transition">
           Premium
         </Link>
-
-        <Link href={"/"} className="hover:text-primary-text">
+        <Link href="/" className="hover:text-primary transition">
           Support
         </Link>
-
-        <Link href={"/"} className="hover:text-primary-text">
+        <Link href="/" className="hover:text-primary transition">
           Download
         </Link>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="w-11 h-11 grid place-items-center text-white">
-          <Search className="cursor-pointer" size={20} />
+      {/* RIGHT SIDE */}
+      <div className="flex items-center gap-3">
+        {/* SEARCH ICON + FIELD */}
+        <div className="relative group">
+          <Search
+            size={20}
+            className="text-primary-text cursor-pointer group-hover:text-primary transition"
+          />
 
-          <div className="bg-background hidden items-center h-11 w-90 px-3 gap-3 text-primary-text">
-            <Search size={20} />
+          {/* SEARCH INPUT (Opens on hover) */}
+          <div
+            className="absolute right-0 top-0 translate-y-12 opacity-0 pointer-events-none 
+            group-hover:opacity-100 group-hover:pointer-events-auto 
+            bg-surface border border-border rounded-xl h-11 w-64 flex items-center gap-3 px-3 
+            text-primary-text transition-all duration-300 shadow-lg"
+          >
+            <Search size={18} />
             <input
-              className="h-full w-full outline-none placeholder:text-primary-text"
               type="text"
-              placeholder="What do you want to play?"
+              placeholder="Search music..."
+              className="w-full bg-transparent outline-none placeholder-secondary-text"
             />
           </div>
         </div>
-        <Link
-          href={"/login"}
-          className="bg-background hover:bg-hover duration-200 cursor-pointer text-primary p-2 rounded-full"
-        >
-          Logout
-        </Link>
+
+        {/* LOGIN / LOGOUT BUTTON */}
+        {!loading && (
+          <>
+            {session ? (
+              <button
+                className="px-4 py-2 rounded-full text-primary border border-primary 
+            hover:bg-primary cursor-pointer hover:text-black transition font-semibold"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-full text-primary border border-primary 
+            hover:bg-primary hover:text-black transition font-semibold"
+              >
+                Login
+              </Link>
+            )}
+          </>
+        )}
       </div>
     </nav>
   );

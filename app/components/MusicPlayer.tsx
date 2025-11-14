@@ -1,6 +1,7 @@
 "use client";
+
 import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Play,
   SkipForward,
@@ -11,6 +12,7 @@ import {
   Pause,
   VolumeX,
 } from "lucide-react";
+import { PlayerContext } from "@/layouts/FrontendLayout";
 
 export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -20,152 +22,158 @@ export default function MusicPlayer() {
   const [duration, setDuration] = useState(0);
   const [previousVolume, setPreviousVolume] = useState(0);
 
+  const context = useContext(PlayerContext);
+  if (!context) {
+    throw new Error("player context must be within a provider");
+  }
+
+  const { isQueueModalOpen, setQueueModalOpen } = context;
+
+  // --- Play / Pause Toggle ---
   const togglePlayButton = () => {
     if (!audioRef.current) return;
-    console.log(audioRef);
-
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play();
     setIsPlaying(!isPlaying);
   };
 
+  // --- Track Time Update ---
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateTime = () => {
       setCurrentTime(audio.currentTime);
-      setDuration(audio.duration | 0);
+      setDuration(audio.duration || 0);
     };
 
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateTime);
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("loadedmetadata", updateTime);
+    };
   }, []);
+
+  // --- Volume Change ---
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume / 100;
+  }, [volume]);
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value);
+    if (audioRef.current) audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const vol = parseInt(e.target.value);
+    setVolume(vol);
+    if (audioRef.current) audioRef.current.volume = vol / 100;
+  };
+
+  const toggleMute = () => {
+    if (volume === 0) {
+      setVolume(previousVolume);
+      if (audioRef.current) audioRef.current.volume = previousVolume / 100;
+    } else {
+      setPreviousVolume(volume);
+      setVolume(0);
+      if (audioRef.current) audioRef.current.volume = 0;
+    }
+  };
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60)
       .toString()
       .padStart(2, "0");
-
     return `${minutes}:${seconds}`;
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const vol = parseInt(e.target.value);
-    setVolume(vol);
-    if (audioRef.current) {
-      audioRef.current.volume = vol / 100;
-    }
-  };
-
-  const toggleMute = () => {
-    if (volume === 0) {
-      setVolume(previousVolume);
-      if (audioRef.current) {
-        audioRef.current.volume = previousVolume / 100;
-      }
-    } else {
-      setPreviousVolume(volume);
-      setVolume(0);
-      if (audioRef.current) {
-        audioRef.current.volume = 0;
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
-    }
-  }, [volume]);
-
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-black text-white px-4 py-3 shadow-md z-50">
+    <div className="fixed bottom-0 left-0 w-full bg-[#0F0F0F]/95 backdrop-blur-md border-t border-[#222] z-50 px-4 py-3 shadow-lg">
       <audio src="/music.mp3" ref={audioRef}></audio>
-      <div className="max-w-8xl w-[95%] mx-auto flex items-center justify-between">
-        <div className="flex gap-4 items-center">
+
+      <div className="max-w-8xl w-[95%] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+        {/* Song Info */}
+        <div className="flex items-center gap-4">
           <Image
-            src={"/coverImage.avif"}
+            src="/coverImage.avif"
             alt="cover image"
             width={300}
             height={300}
-            className="w-13 h-13 object-cover rounded-md"
+            className="w-14 h-14 object-cover rounded-md"
           />
-          <div className="text-sm">
-            <p className="text-white">Bicycle</p>
-            <p className="text-secondary-text">Emmanuel</p>
+          <div className="flex flex-col">
+            <p className="text-primary-text font-semibold truncate text-sm">
+              Bicycle
+            </p>
+            <p className="text-secondary-text text-xs truncate">Emmanuel</p>
           </div>
         </div>
-        {/* Song controls */}
-        <div className="max-w-[400px] w-full flex items-center flex-col gap-3">
-          <div className="flex gap-4">
-            <button className="text-xl text-secondary-text cursor-pointer">
-              <SkipBack />
+
+        {/* Controls */}
+        <div className="flex flex-col items-center gap-2 max-w-[400px] w-full">
+          <div className="flex items-center gap-4">
+            <button className="text-secondary-text hover:text-primary transition">
+              <SkipBack size={20} />
             </button>
             <button
               onClick={togglePlayButton}
-              className="bg-white cursor-pointer text-xl text-black w-10 h-10 rounded-full grid place-items-center"
+              className="bg-primary hover:scale-105 transition-transform w-10 h-10 rounded-full flex items-center justify-center text-black"
             >
-              {isPlaying ? <Pause /> : <Play />}
+              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
             </button>
-            <button className="text-xl text-secondary-text cursor-pointer">
-              <SkipForward />
+            <button className="text-secondary-text hover:text-primary transition">
+              <SkipForward size={20} />
             </button>
           </div>
-          <div className="w-full flex justify-center items-center gap-2">
-            <span className="text-secondary-text font-normal text-sm">
+
+          {/* Seek Bar */}
+          <div className="flex items-center gap-2 w-full">
+            <span className="text-secondary-text text-xs font-mono">
               {formatTime(currentTime)}
             </span>
-            <div className="w-full">
-              <input
-                onChange={handleSeek}
-                type="range"
-                min={0}
-                max={currentTime}
-                className="w-full outline-none h-1 bg-zinc-700 rounded-md appearance-none accent-white"
-              />
-            </div>
-            <span className="text-secondary-text font-normal text-sm">
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              value={currentTime}
+              onChange={handleSeek}
+              className="w-full h-1 rounded-lg bg-zinc-700 accent-primary appearance-none"
+            />
+            <span className="text-secondary-text text-xs font-mono">
               {formatTime(duration)}
             </span>
           </div>
         </div>
-        {/* volume control */}
-        <div className="flex items-center gap-2">
-          <button>
-            <Repeat />
+
+        {/* Volume + Extras */}
+        <div className="flex items-center gap-3">
+          <button className="text-secondary-text hover:text-primary transition">
+            <Repeat size={18} />
           </button>
-          <button className="text-secondary-text text-xl cursor-pointer">
-            <ListMusic />
+          <button
+            onClick={() => setQueueModalOpen(!isQueueModalOpen)}
+            className="text-secondary-text hover:text-primary transition"
+          >
+            <ListMusic size={18} />
           </button>
           <button
             onClick={toggleMute}
-            className="text-secondary-text text-xl cursor-pointer"
+            className="text-secondary-text hover:text-primary transition"
           >
-            {volume ? <Volume2 /> : <VolumeX />}
-            {/* <Volume2 /> */}
+            {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
           <input
-            onChange={handleVolumeChange}
-            value={volume}
             type="range"
-            min="0"
-            max="100"
-            className="w-[100px] outline-none h-1 bg-zinc-700 accent-white appearance-none"
+            min={0}
+            max={100}
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-24 h-1 accent-primary bg-zinc-700 rounded-lg appearance-none"
           />
         </div>
       </div>
