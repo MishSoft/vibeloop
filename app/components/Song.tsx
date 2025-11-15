@@ -3,16 +3,28 @@
 import React from "react";
 import Image from "next/image";
 import { Play } from "lucide-react";
+import { SongType } from "@/types/song";
 
 interface SongProps {
   title: string;
   artist: string;
   image: string;
+  startPlaying: (songs: SongType[], index: number) => void;
+  index: number;
+  song: SongType[];
 }
 
-export default function Song({ title, artist, image }: SongProps) {
+export default function Song({
+  title,
+  artist,
+  image,
+  index,
+  song,
+  startPlaying,
+}: SongProps) {
   return (
     <div
+      onClick={() => startPlaying(song, index)}
       className="
         relative bg-surface rounded-lg overflow-hidden cursor-pointer group 
         hover:shadow-[0_0_15px_#1CFF82]/30 hover:scale-105 transition-all duration-300

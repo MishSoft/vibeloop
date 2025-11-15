@@ -25,7 +25,7 @@ export default function UploadPage() {
         setPageLoading(false);
       }
     });
-  }, []);
+  }, [router]);
 
   if (pageLoading) return null;
 
@@ -76,7 +76,7 @@ export default function UploadPage() {
         title,
         artist,
         cover_image_url: imageUrl,
-        audio_url: audioPath,
+        audio_url: audioURL,
         user_id: session?.user.id,
       });
 

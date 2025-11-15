@@ -11,6 +11,7 @@ import {
   Volume2,
   Pause,
   VolumeX,
+  Repeat1,
 } from "lucide-react";
 import { PlayerContext } from "@/layouts/FrontendLayout";
 
@@ -21,13 +22,20 @@ export default function MusicPlayer() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [previousVolume, setPreviousVolume] = useState(0);
+  const [repeatSong, setRepeatSong] = useState(false);
 
   const context = useContext(PlayerContext);
   if (!context) {
     throw new Error("player context must be within a provider");
   }
 
-  const { isQueueModalOpen, setQueueModalOpen } = context;
+  const {
+    isQueueModalOpen,
+    setQueueModalOpen,
+    currentMusic,
+    playNext,
+    playPrev,
+  } = context;
 
   // --- Play / Pause Toggle ---
   const togglePlayButton = () => {
@@ -92,15 +100,55 @@ export default function MusicPlayer() {
     return `${minutes}:${seconds}`;
   };
 
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    if (!audio || !currentMusic) return;
+
+    const playAudio = async () => {
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.log("Audio Error:", error);
+        setIsPlaying(false);
+      }
+    };
+
+    playAudio();
+  }, [currentMusic]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handledEnded = () => {
+      if (repeatSong) {
+        audio.currentTime = 0;
+        audio.play();
+      } else {
+        playNext();
+      }
+    };
+
+    audio.addEventListener("ended", handledEnded);
+
+    return () => {
+      audio.removeEventListener("ended", handledEnded);
+    };
+  }, [playNext, repeatSong]);
+
+  if (!currentMusic) return null;
+
   return (
     <div className="fixed bottom-0 left-0 w-full bg-[#0F0F0F]/95 backdrop-blur-md border-t border-[#222] z-50 px-4 py-3 shadow-lg">
-      <audio src="/music.mp3" ref={audioRef}></audio>
+      <audio src={currentMusic.audio_url || ""} ref={audioRef}></audio>
 
       <div className="max-w-8xl w-[95%] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Song Info */}
         <div className="flex items-center gap-4">
           <Image
-            src="/coverImage.avif"
+            src={currentMusic.cover_image_url || ""}
             alt="cover image"
             width={300}
             height={300}
@@ -108,16 +156,21 @@ export default function MusicPlayer() {
           />
           <div className="flex flex-col">
             <p className="text-primary-text font-semibold truncate text-sm">
-              Bicycle
+              {currentMusic.title}
             </p>
-            <p className="text-secondary-text text-xs truncate">Emmanuel</p>
+            <p className="text-secondary-text text-xs truncate">
+              {currentMusic.artist}
+            </p>
           </div>
         </div>
 
         {/* Controls */}
         <div className="flex flex-col items-center gap-2 max-w-[400px] w-full">
           <div className="flex items-center gap-4">
-            <button className="text-secondary-text hover:text-primary transition">
+            <button
+              onClick={playPrev}
+              className="text-secondary-text hover:text-primary transition"
+            >
               <SkipBack size={20} />
             </button>
             <button
@@ -126,7 +179,10 @@ export default function MusicPlayer() {
             >
               {isPlaying ? <Pause size={20} /> : <Play size={20} />}
             </button>
-            <button className="text-secondary-text hover:text-primary transition">
+            <button
+              onClick={playNext}
+              className="text-secondary-text hover:text-primary transition"
+            >
               <SkipForward size={20} />
             </button>
           </div>
@@ -152,9 +208,21 @@ export default function MusicPlayer() {
 
         {/* Volume + Extras */}
         <div className="flex items-center gap-3">
-          <button className="text-secondary-text hover:text-primary transition">
-            <Repeat size={18} />
-          </button>
+          {repeatSong ? (
+            <button
+              onClick={() => setRepeatSong(false)}
+              className="text-primary hover:text-primary transition"
+            >
+              <Repeat1 size={18} />
+            </button>
+          ) : (
+            <button
+              onClick={() => setRepeatSong(true)}
+              className="text-secondary-text hover:text-primary transition"
+            >
+              <Repeat size={18} />
+            </button>
+          )}
           <button
             onClick={() => setQueueModalOpen(!isQueueModalOpen)}
             className="text-secondary-text hover:text-primary transition"

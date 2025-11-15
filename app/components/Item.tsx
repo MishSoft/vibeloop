@@ -1,18 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import React from "react";
+import React, { useContext } from "react";
 import { Trash } from "lucide-react";
 import { supabase } from "@/lib/SupabaseClient";
-import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SongType } from "@/types/song";
+import { PlayerContext } from "@/layouts/FrontendLayout";
 
 type ItemProps = {
   userId: string | undefined;
 };
 
 export default function Item({ userId }: ItemProps) {
+  const context = useContext(PlayerContext);
+
+  if (!context) {
+    throw new Error("PlayerContext must be used within a PlayerProvider");
+  }
+  const { setQueue, setCurrentIndex } = context;
   const queryClient = useQueryClient();
+
   const getUserSongs = async () => {
     const { error, data } = await supabase
       .from("song")
@@ -21,9 +29,22 @@ export default function Item({ userId }: ItemProps) {
 
     if (error) {
       console.log("UserSong Error", error.message);
+      return [];
     }
 
-    return data;
+    // აქ ვქმნით public URL-ს ყველასთვის
+    const songsWithPublicUrl = data.map((song) => {
+      const { publicUrl } = supabase.storage
+        .from("songs") // შენს bucket-ის სახელი
+        .getPublicUrl(song.audio_url).data;
+
+      return {
+        ...song,
+        audio_url: publicUrl,
+      };
+    });
+
+    return songsWithPublicUrl;
   };
 
   const {
@@ -42,6 +63,13 @@ export default function Item({ userId }: ItemProps) {
   if (isError)
     return <h1 className="text-center text-secondary-text">{error.message}</h1>;
 
+  if (songs?.length === 0)
+    return (
+      <h1 className="text-center text-secondary-text">
+        You have no songs in your library
+      </h1>
+    );
+
   const deleteSong = async (
     songPath: string,
     imagePath: string,
@@ -57,11 +85,12 @@ export default function Item({ userId }: ItemProps) {
     }
 
     const { error: audioError } = await supabase.storage
-      .from("song")
+      .from("song") // აქაც bucket-ის სახელი
       .remove([songPath]);
 
     if (audioError) {
       console.log("AudioError", audioError.message);
+      return;
     }
 
     const { error: deleteError } = await supabase
@@ -78,11 +107,17 @@ export default function Item({ userId }: ItemProps) {
     queryClient.invalidateQueries({ queryKey: ["userSongs"] });
   };
 
+  const startPlayingSong = (songs: SongType[], index: number) => {
+    setCurrentIndex(index);
+    setQueue(songs);
+  };
+
   return (
     <div>
-      {songs?.map((song: SongType) => {
+      {songs?.map((song: SongType, index) => {
         return (
           <div
+            onClick={() => startPlayingSong(songs, index)}
             key={song.id}
             className="
         flex justify-between items-center p-2 rounded-lg 
@@ -107,13 +142,13 @@ export default function Item({ userId }: ItemProps) {
               </div>
             </div>
 
-            {/* Trash Button (Visible on hover) */}
+            {/* Trash Button */}
             <button
               onClick={() =>
                 deleteSong(song.audio_url, song.cover_image_url, song.id)
               }
               className="
-          text-red-500 p-1 rounded-full 
+          text-red-500 z-999 cursor-pointer p-1 rounded-full 
           opacity-0 group-hover:opacity-100 
           hover:bg-hover transition duration-200
         "

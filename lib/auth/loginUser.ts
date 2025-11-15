@@ -3,9 +3,13 @@ import { Session } from "@supabase/supabase-js";
 
 type LoginResult =
   | { session: Session; error?: undefined }
-  | { error: string; session?: undefined };
+  | { error: string; session?: undefined }
+  | undefined;
 
-const loginUser = async (email: string, password: string) => {
+const loginUser = async (
+  email: string,
+  password: string
+): Promise<LoginResult> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
