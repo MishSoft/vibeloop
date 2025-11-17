@@ -1,8 +1,4 @@
 "use client";
-// import MusicPlayer from "@/app/login/components/MusicPlayer";
-// import Nav from "@/app/login/components/Nav";
-// import Queue from "@/app/login/components/Queue";
-// import SideBar from "@/app/login/components/SideBar";
 import React, { createContext, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SongType } from "@/types/song";

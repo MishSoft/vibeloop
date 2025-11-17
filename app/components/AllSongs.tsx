@@ -26,19 +26,8 @@ export default function AllSongs() {
       return [];
     }
 
-    // აქ ვქმნით public URL-ს აუდიოსთვის
-    const songsWithPublicUrl = data.map((song) => {
-      const { publicUrl } = supabase.storage
-        .from("songs") // შენს bucket-ის სახელი
-        .getPublicUrl(song.audio_url).data;
-
-      return {
-        ...song,
-        audio_url: publicUrl,
-      };
-    });
-
-    return songsWithPublicUrl;
+    // თუ DB-ში audio_url უკვე სრული URLა, უბრალოდ დაბრუნდეს data
+    return data;
   };
 
   const {
@@ -79,20 +68,25 @@ export default function AllSongs() {
     );
 
   return (
-    <div className="min-h-[90vh] bg-background pt-20 pb-8 px-4 lg:ml-80 lg:px-6">
-      <h2 className="text-2xl font-semibold text-primary-text mb-6">
-        New Songs
-      </h2>
+    <div className="min-h-screen pt-10 my-15   pb-8 border border-border px-4 lg:ml-75 lg:px-6 bg-linear-to-b from-[#0F0F0F]/80 via-[#121212]/70 to-[#0F0F0F]/80">
+      <h2 className="text-3xl font-bold text-gray-100 mb-6">New Songs</h2>
 
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {songs?.map((song: SongType, index) => (
           <div
             key={song.id}
             onClick={() => startPlayingSong(songs, index)}
             className="
-              relative bg-surface rounded-lg overflow-hidden cursor-pointer group 
-              hover:shadow-[0_0_15px_#1CFF82]/30 hover:scale-105 transition-all duration-300
-            "
+          relative 
+          bg-[rgba(255,255,255,0.05)] 
+          border border-[rgba(255,255,255,0.08)] 
+          rounded-2xl overflow-hidden cursor-pointer group
+          transition-all duration-300
+          hover:bg-[rgba(255,255,255,0.1)] 
+          hover:border-[rgba(255,255,255,0.15)] 
+          hover:shadow-[0_8px_25px_rgba(255,255,255,0.07)] 
+          hover:-translate-y-1
+        "
           >
             {/* Cover Image */}
             <Image
@@ -100,26 +94,39 @@ export default function AllSongs() {
               alt="Cover image"
               width={300}
               height={300}
-              className="w-full h-52 object-cover"
+              className="w-full h-52 object-cover rounded-t-2xl group-hover:brightness-110 transition"
             />
 
             {/* Play Button Overlay */}
             <button
               className="
-                absolute inset-0 w-20 h-20 translate-x-[-50%] left-[50%] translate-y-[-50%] top-[50%] flex items-center justify-center 
-                bg-primary/30 backdrop-blur-md opacity-0 group-hover:opacity-100 
-                transition-opacity duration-300 rounded-full text-white
-              "
+            absolute inset-0 flex items-center justify-center
+            opacity-0 group-hover:opacity-100 
+            transition-all duration-300
+            bg-[rgba(0,0,0,0.35)] backdrop-blur-sm
+          "
             >
-              <Play size={28} />
+              <div
+                className="
+            w-14 h-14 rounded-full 
+            flex items-center justify-center 
+            bg-[rgba(255,255,255,0.15)] 
+            border border-[rgba(255,255,255,0.25)]
+            text-white shadow-xl 
+            transition-all duration-300
+            group-hover:scale-110
+          "
+              >
+                <Play size={26} />
+              </div>
             </button>
 
             {/* Song Info */}
-            <div className="p-2">
-              <p className="text-primary-text font-semibold text-sm truncate">
+            <div className="p-3">
+              <p className="text-gray-100 font-semibold text-sm truncate tracking-wide">
                 {song.title}
               </p>
-              <p className="text-secondary-text text-xs truncate">
+              <p className="text-gray-400 text-xs truncate mt-0.5">
                 {song.artist}
               </p>
             </div>

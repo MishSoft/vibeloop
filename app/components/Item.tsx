@@ -18,9 +18,13 @@ export default function Item({ userId }: ItemProps) {
   if (!context) {
     throw new Error("PlayerContext must be used within a PlayerProvider");
   }
+
   const { setQueue, setCurrentIndex } = context;
   const queryClient = useQueryClient();
 
+  // --------------------------
+  // Fetch User Songs
+  // --------------------------
   const getUserSongs = async () => {
     const { error, data } = await supabase
       .from("song")
@@ -32,10 +36,10 @@ export default function Item({ userId }: ItemProps) {
       return [];
     }
 
-    // აქ ვქმნით public URL-ს ყველასთვის
+    // შექმნა public URL
     const songsWithPublicUrl = data.map((song) => {
       const { publicUrl } = supabase.storage
-        .from("songs") // შენს bucket-ის სახელი
+        .from("songs") // bucket-ის სწორი სახელი
         .getPublicUrl(song.audio_url).data;
 
       return {
@@ -54,7 +58,8 @@ export default function Item({ userId }: ItemProps) {
     isError,
   } = useQuery({
     queryFn: getUserSongs,
-    queryKey: ["userSongs"],
+    queryKey: ["userSongs", userId],
+    enabled: !!userId,
   });
 
   if (isLoading)
@@ -70,11 +75,15 @@ export default function Item({ userId }: ItemProps) {
       </h1>
     );
 
+  // --------------------------
+  // Delete Song
+  // --------------------------
   const deleteSong = async (
     songPath: string,
     imagePath: string,
     songId: number
   ) => {
+    // Delete cover image
     const { error: imageError } = await supabase.storage
       .from("cover-images")
       .remove([imagePath]);
@@ -84,8 +93,9 @@ export default function Item({ userId }: ItemProps) {
       return;
     }
 
+    // Delete audio file → bucket IS "songs"
     const { error: audioError } = await supabase.storage
-      .from("song") // აქაც bucket-ის სახელი
+      .from("songs")
       .remove([songPath]);
 
     if (audioError) {
@@ -93,6 +103,7 @@ export default function Item({ userId }: ItemProps) {
       return;
     }
 
+    // Delete DB entry
     const { error: deleteError } = await supabase
       .from("song")
       .delete()
@@ -103,6 +114,7 @@ export default function Item({ userId }: ItemProps) {
       return;
     }
 
+    // Refresh lists
     queryClient.invalidateQueries({ queryKey: ["allSongs"] });
     queryClient.invalidateQueries({ queryKey: ["userSongs"] });
   };
@@ -112,52 +124,59 @@ export default function Item({ userId }: ItemProps) {
     setQueue(songs);
   };
 
+  // --------------------------
+  // Render
+  // --------------------------
   return (
     <div>
-      {songs?.map((song: SongType, index) => {
-        return (
-          <div
-            onClick={() => startPlayingSong(songs, index)}
-            key={song.id}
-            className="
-        flex justify-between items-center p-2 rounded-lg 
-        cursor-pointer group
-        hover:bg-[#181818] hover:shadow-[0_0_10px_#1CFF82]/20 transition-all duration-300
-      "
-          >
-            {/* Cover + Info */}
-            <div className="flex items-center gap-3">
-              <Image
-                src={song.cover_image_url}
-                width={300}
-                height={300}
-                alt="cover-image"
-                className="w-10 h-10 object-cover rounded-md"
-              />
-              <div className="flex flex-col">
-                <p className="text-primary-text text-sm font-semibold">
-                  {song.title}
-                </p>
-                <p className="text-secondary-text text-xs">{song.artist}</p>
-              </div>
-            </div>
+      {songs?.map((song: SongType, index) => (
+        <div
+          key={song.id}
+          onClick={() => startPlayingSong(songs, index)}
+          className="
+            flex justify-between items-center p-2 rounded-lg 
+            cursor-pointer group
+            transition-all duration-300
 
-            {/* Trash Button */}
-            <button
-              onClick={() =>
-                deleteSong(song.audio_url, song.cover_image_url, song.id)
-              }
-              className="
-          text-red-500 z-999 cursor-pointer p-1 rounded-full 
-          opacity-0 group-hover:opacity-100 
-          hover:bg-hover transition duration-200
-        "
-            >
-              <Trash size={15} />
-            </button>
+            hover:bg-[#1a1a1a]
+            hover:shadow-[0_0_10px_rgba(28,255,130,0.18)]
+          "
+        >
+          {/* Cover + Title */}
+          <div className="flex items-center gap-3">
+            <Image
+              src={song.cover_image_url}
+              width={300}
+              height={300}
+              alt="cover-image"
+              className="w-10 h-10 object-cover rounded-md"
+            />
+
+            <div className="flex flex-col">
+              <p className="text-primary-text text-sm font-semibold">
+                {song.title}
+              </p>
+              <p className="text-secondary-text text-xs">{song.artist}</p>
+            </div>
           </div>
-        );
-      })}
+
+          {/* Delete */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // ❗ prevents playing
+              deleteSong(song.audio_url, song.cover_image_url, song.id);
+            }}
+            className="
+              text-red-500 p-1 rounded-full 
+              opacity-0 group-hover:opacity-100
+              hover:bg-[#2a2a2a]
+              transition duration-200
+            "
+          >
+            <Trash size={16} />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

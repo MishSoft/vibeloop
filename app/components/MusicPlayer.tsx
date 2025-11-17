@@ -14,6 +14,7 @@ import {
   Repeat1,
 } from "lucide-react";
 import { PlayerContext } from "@/layouts/FrontendLayout";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -25,9 +26,7 @@ export default function MusicPlayer() {
   const [repeatSong, setRepeatSong] = useState(false);
 
   const context = useContext(PlayerContext);
-  if (!context) {
-    throw new Error("player context must be within a provider");
-  }
+  if (!context) throw new Error("PlayerContext must be within a provider");
 
   const {
     isQueueModalOpen,
@@ -37,7 +36,6 @@ export default function MusicPlayer() {
     playPrev,
   } = context;
 
-  // --- Play / Pause Toggle ---
   const togglePlayButton = () => {
     if (!audioRef.current) return;
     if (isPlaying) audioRef.current.pause();
@@ -45,7 +43,6 @@ export default function MusicPlayer() {
     setIsPlaying(!isPlaying);
   };
 
-  // --- Track Time Update ---
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -64,7 +61,6 @@ export default function MusicPlayer() {
     };
   }, []);
 
-  // --- Volume Change ---
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume / 100;
   }, [volume]);
@@ -102,7 +98,6 @@ export default function MusicPlayer() {
 
   useEffect(() => {
     const audio = audioRef.current;
-
     if (!audio || !currentMusic) return;
 
     const playAudio = async () => {
@@ -110,7 +105,7 @@ export default function MusicPlayer() {
         await audio.play();
         setIsPlaying(true);
       } catch (error) {
-        console.log("Audio Error:", error);
+        console.log("Error:", error);
         setIsPlaying(false);
       }
     };
@@ -122,7 +117,7 @@ export default function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handledEnded = () => {
+    const handleEnded = () => {
       if (repeatSong) {
         audio.currentTime = 0;
         audio.play();
@@ -131,65 +126,75 @@ export default function MusicPlayer() {
       }
     };
 
-    audio.addEventListener("ended", handledEnded);
-
-    return () => {
-      audio.removeEventListener("ended", handledEnded);
-    };
+    audio.addEventListener("ended", handleEnded);
+    return () => audio.removeEventListener("ended", handleEnded);
   }, [playNext, repeatSong]);
 
   if (!currentMusic) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-[#0F0F0F]/95 backdrop-blur-md border-t border-[#222] z-50 px-4 py-3 shadow-lg">
+    <div className="fixed bottom-0 left-0 w-full bg-[#121212]/95 backdrop-blur-lg border-t border-[#222] z-50 px-4 py-3 shadow-2xl">
       <audio src={currentMusic.audio_url || ""} ref={audioRef}></audio>
 
-      <div className="max-w-8xl w-[95%] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+      <div className="max-w-8xl w-[95%] mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
         {/* Song Info */}
         <div className="flex items-center gap-4">
-          <Image
-            src={currentMusic.cover_image_url || ""}
-            alt="cover image"
-            width={300}
-            height={300}
-            className="w-14 h-14 object-cover rounded-md"
-          />
-          <div className="flex flex-col">
-            <p className="text-primary-text font-semibold truncate text-sm">
-              {currentMusic.title}
-            </p>
-            <p className="text-secondary-text text-xs truncate">
-              {currentMusic.artist}
-            </p>
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentMusic.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-4"
+            >
+              <Image
+                src={currentMusic.cover_image_url || ""}
+                alt="cover image"
+                width={300}
+                height={300}
+                className="w-14 h-14 object-cover rounded-md shadow-md"
+              />
+              <div className="flex flex-col overflow-hidden">
+                <p className="text-white font-semibold truncate">
+                  {currentMusic.title}
+                </p>
+                <p className="text-gray-400 text-sm truncate">
+                  {currentMusic.artist}
+                </p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col items-center gap-2 max-w-[400px] w-full">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center gap-2 w-full max-w-[400px]">
+          <div className="flex items-center gap-6">
             <button
               onClick={playPrev}
-              className="text-secondary-text hover:text-primary transition"
+              className="text-gray-400 hover:text-[#F93493] transition-transform duration-300 hover:scale-110"
             >
-              <SkipBack size={20} />
+              <SkipBack size={22} />
             </button>
-            <button
+            <motion.button
               onClick={togglePlayButton}
-              className="bg-primary hover:scale-105 transition-transform w-10 h-10 rounded-full flex items-center justify-center text-black"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.1 }}
+              className="w-12 h-12 bg-[#F93493] rounded-full flex items-center justify-center shadow-lg text-black transition-all"
             >
-              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-            </button>
+              {isPlaying ? <Pause size={22} /> : <Play size={22} />}
+            </motion.button>
             <button
               onClick={playNext}
-              className="text-secondary-text hover:text-primary transition"
+              className="text-gray-400 hover:text-[#F93493] transition-transform duration-300 hover:scale-110"
             >
-              <SkipForward size={20} />
+              <SkipForward size={22} />
             </button>
           </div>
 
           {/* Seek Bar */}
-          <div className="flex items-center gap-2 w-full">
-            <span className="text-secondary-text text-xs font-mono">
+          <div className="flex items-center gap-2 w-full mt-1">
+            <span className="text-gray-400 text-xs font-mono">
               {formatTime(currentTime)}
             </span>
             <input
@@ -198,9 +203,9 @@ export default function MusicPlayer() {
               max={duration || 0}
               value={currentTime}
               onChange={handleSeek}
-              className="w-full h-1 rounded-lg bg-zinc-700 accent-primary appearance-none"
+              className="w-full h-1 rounded-lg accent-[#F93493] bg-gray-700 appearance-none"
             />
-            <span className="text-secondary-text text-xs font-mono">
+            <span className="text-gray-400 text-xs font-mono">
               {formatTime(duration)}
             </span>
           </div>
@@ -208,40 +213,36 @@ export default function MusicPlayer() {
 
         {/* Volume + Extras */}
         <div className="flex items-center gap-3">
-          {repeatSong ? (
-            <button
-              onClick={() => setRepeatSong(false)}
-              className="text-primary hover:text-primary transition"
-            >
-              <Repeat1 size={18} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setRepeatSong(true)}
-              className="text-secondary-text hover:text-primary transition"
-            >
-              <Repeat size={18} />
-            </button>
-          )}
+          <button
+            onClick={() => setRepeatSong(!repeatSong)}
+            className={`transition-transform duration-300 hover:scale-110 ${
+              repeatSong ? "text-[#F93493]" : "text-gray-400"
+            }`}
+          >
+            {repeatSong ? <Repeat1 size={18} /> : <Repeat size={18} />}
+          </button>
+
           <button
             onClick={() => setQueueModalOpen(!isQueueModalOpen)}
-            className="text-secondary-text hover:text-primary transition"
+            className="text-gray-400 hover:text-[#F93493] transition-transform duration-300 hover:scale-110"
           >
             <ListMusic size={18} />
           </button>
+
           <button
             onClick={toggleMute}
-            className="text-secondary-text hover:text-primary transition"
+            className="text-gray-400 hover:text-[#F93493] transition-transform duration-300 hover:scale-110"
           >
             {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
+
           <input
             type="range"
             min={0}
             max={100}
             value={volume}
             onChange={handleVolumeChange}
-            className="w-24 h-1 accent-primary bg-zinc-700 rounded-lg appearance-none"
+            className="w-28 h-1 accent-[#F93493] bg-gray-700 rounded-lg appearance-none"
           />
         </div>
       </div>
